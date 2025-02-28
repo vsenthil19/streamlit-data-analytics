@@ -1,25 +1,59 @@
 import streamlit as st
 from utils import load_data
+from database import Dataset, get_session, init_db
+from datetime import datetime
 
 def show_upload_section():
     st.header("Data Upload")
     st.write("Upload your data file (CSV or Excel)")
-    
+
+    # Initialize database if needed
+    init_db()
+
     uploaded_file = st.file_uploader(
         "Choose a file",
         type=["csv", "xlsx", "xls"],
         help="Upload a CSV or Excel file"
     )
-    
+
     if uploaded_file is not None:
         try:
+            # Load data into pandas DataFrame
             data = load_data(uploaded_file)
-            st.session_state.data = data
-            
-            st.success("Data uploaded successfully!")
+
+            # Store in database
+            with get_session() as session:
+                dataset = Dataset.from_pandas(data, uploaded_file.name)
+                session.add(dataset)
+                session.commit()
+
+                # Store dataset ID in session state
+                st.session_state.current_dataset_id = dataset.id
+                st.session_state.data = data
+
+            st.success("Data uploaded successfully and saved to database!")
             st.write("Dataset Shape:", data.shape)
             st.write("Preview of the data:")
             st.dataframe(data.head())
-            
+
         except Exception as e:
             st.error(f"Error loading data: {str(e)}")
+
+    # Show existing datasets
+    with get_session() as session:
+        datasets = session.query(Dataset).all()
+        if datasets:
+            st.subheader("Existing Datasets")
+            for dataset in datasets:
+                col1, col2, col3 = st.columns([2, 2, 1])
+                with col1:
+                    st.write(f"Name: {dataset.name}")
+                with col2:
+                    st.write(f"Uploaded: {dataset.upload_date.strftime('%Y-%m-%d %H:%M')}")
+                with col3:
+                    if st.button("Load", key=f"load_{dataset.id}"):
+                        data = dataset.to_pandas()
+                        st.session_state.current_dataset_id = dataset.id
+                        st.session_state.data = data
+                        st.success(f"Loaded dataset: {dataset.name}")
+                        st.experimental_rerun()
