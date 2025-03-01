@@ -7,6 +7,7 @@ import pandas as pd
 from datetime import datetime
 import logging
 import time
+from io import StringIO
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -75,7 +76,7 @@ class Dataset(Base):
     def to_pandas(self):
         """Convert stored data back to pandas DataFrame"""
         try:
-            return pd.read_csv(pd.StringIO(self.data))
+            return pd.read_csv(StringIO(self.data))
         except Exception as e:
             logger.error(f"Error converting data to DataFrame: {str(e)}")
             raise
