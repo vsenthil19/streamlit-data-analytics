@@ -1,10 +1,12 @@
 from sqlalchemy import create_engine, Column, Integer, Float, String, DateTime, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 import os
 import pandas as pd
 from datetime import datetime
 import logging
+import time
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -15,13 +17,33 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is not set")
 
-# Create SQLAlchemy engine
-try:
-    engine = create_engine(DATABASE_URL)
-    logger.info("Database engine created successfully")
-except Exception as e:
-    logger.error(f"Error creating database engine: {str(e)}")
-    raise
+def create_db_engine(retries=3, delay=2):
+    """Create database engine with retry logic"""
+    for attempt in range(retries):
+        try:
+            # Disable connection pooling and set SSL mode to require
+            engine = create_engine(
+                DATABASE_URL,
+                poolclass=NullPool,
+                connect_args={
+                    "sslmode": "require",
+                    "connect_timeout": 30
+                }
+            )
+            # Test the connection
+            with engine.connect() as conn:
+                conn.execute("SELECT 1")
+            logger.info("Database engine created successfully")
+            return engine
+        except Exception as e:
+            if attempt == retries - 1:
+                logger.error(f"Failed to create database engine after {retries} attempts: {str(e)}")
+                raise
+            logger.warning(f"Database connection attempt {attempt + 1} failed: {str(e)}")
+            time.sleep(delay)
+
+# Create engine with retry logic
+engine = create_db_engine()
 
 # Create declarative base
 Base = declarative_base()
