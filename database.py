@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, Float, String, DateTime, inspect
+from sqlalchemy import create_engine, Column, Integer, Float, String, DateTime, inspect, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
@@ -32,7 +32,8 @@ def create_db_engine(retries=3, delay=2):
             )
             # Test the connection
             with engine.connect() as conn:
-                conn.execute("SELECT 1")
+                conn.execute(text("SELECT 1"))
+                conn.commit()
             logger.info("Database engine created successfully")
             return engine
         except Exception as e:
