@@ -20,11 +20,26 @@ def get_categorical_columns(df):
     return df.select_dtypes(include=['object', 'category']).columns.tolist()
 
 def calculate_summary_stats(df):
-    """Calculate basic summary statistics"""
-    numeric_stats = df.describe()
-    categorical_stats = df.describe(include=['object', 'category'])
-    missing_values = df.isnull().sum()
-    return numeric_stats, categorical_stats, missing_values
+    """Calculate basic summary statistics with error handling"""
+    try:
+        # Handle numeric columns
+        numeric_cols = get_numeric_columns(df)
+        numeric_stats = pd.DataFrame()
+        if numeric_cols:
+            numeric_stats = df[numeric_cols].describe()
+
+        # Handle categorical columns
+        categorical_cols = get_categorical_columns(df)
+        categorical_stats = pd.DataFrame()
+        if categorical_cols:
+            categorical_stats = df[categorical_cols].describe()
+
+        # Calculate missing values
+        missing_values = df.isnull().sum()
+
+        return numeric_stats, categorical_stats, missing_values
+    except Exception as e:
+        raise Exception(f"Error calculating summary statistics: {str(e)}")
 
 def perform_normality_test(data):
     """Perform Shapiro-Wilk normality test"""
