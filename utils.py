@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from scipy import stats
 
 def load_data(file):
     """Load data from uploaded file"""
@@ -24,3 +25,89 @@ def calculate_summary_stats(df):
     categorical_stats = df.describe(include=['object', 'category'])
     missing_values = df.isnull().sum()
     return numeric_stats, categorical_stats, missing_values
+
+def perform_normality_test(data):
+    """Perform Shapiro-Wilk normality test"""
+    try:
+        statistic, p_value = stats.shapiro(data)
+        return {
+            'test_name': 'Shapiro-Wilk',
+            'statistic': statistic,
+            'p_value': p_value,
+            'is_normal': p_value > 0.05
+        }
+    except Exception as e:
+        return {
+            'test_name': 'Shapiro-Wilk',
+            'error': str(e)
+        }
+
+def perform_ttest(data1, data2=None, paired=False):
+    """Perform t-test (one-sample or two-sample)"""
+    try:
+        if data2 is None:
+            # One-sample t-test against mean=0
+            statistic, p_value = stats.ttest_1samp(data1, 0)
+            test_type = 'One-sample'
+        else:
+            # Two-sample t-test
+            statistic, p_value = stats.ttest_ind(data1, data2) if not paired else stats.ttest_rel(data1, data2)
+            test_type = 'Paired' if paired else 'Independent'
+
+        return {
+            'test_type': f'{test_type} t-test',
+            'statistic': statistic,
+            'p_value': p_value,
+            'significant': p_value < 0.05
+        }
+    except Exception as e:
+        return {
+            'test_type': 'T-test',
+            'error': str(e)
+        }
+
+def perform_anova(data_groups):
+    """Perform one-way ANOVA"""
+    try:
+        f_statistic, p_value = stats.f_oneway(*data_groups)
+        return {
+            'test_name': 'One-way ANOVA',
+            'f_statistic': f_statistic,
+            'p_value': p_value,
+            'significant': p_value < 0.05
+        }
+    except Exception as e:
+        return {
+            'test_name': 'ANOVA',
+            'error': str(e)
+        }
+
+def calculate_effect_size(data1, data2):
+    """Calculate Cohen's d effect size"""
+    try:
+        d = (np.mean(data1) - np.mean(data2)) / np.sqrt(
+            ((len(data1) - 1) * np.var(data1) + (len(data2) - 1) * np.var(data2)) /
+            (len(data1) + len(data2) - 2)
+        )
+        return {
+            'metric': "Cohen's d",
+            'value': d,
+            'interpretation': interpret_cohens_d(d)
+        }
+    except Exception as e:
+        return {
+            'metric': "Cohen's d",
+            'error': str(e)
+        }
+
+def interpret_cohens_d(d):
+    """Interpret Cohen's d effect size"""
+    d = abs(d)
+    if d < 0.2:
+        return 'Negligible effect'
+    elif d < 0.5:
+        return 'Small effect'
+    elif d < 0.8:
+        return 'Medium effect'
+    else:
+        return 'Large effect'

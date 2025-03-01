@@ -5,6 +5,7 @@ from components.data_upload import show_upload_section
 from components.data_explorer import show_explorer_section
 from components.visualizations import show_visualization_section
 from components.analysis import show_analysis_section
+from components.advanced_analysis import show_advanced_analysis_section
 
 # Configure logging
 logging.basicConfig(
@@ -32,7 +33,7 @@ def main():
         st.sidebar.header("Navigation")
         page = st.sidebar.radio(
             "Select a Section:",
-            ["Data Upload", "Data Explorer", "Visualizations", "Analysis"]
+            ["Data Upload", "Data Explorer", "Visualizations", "Analysis", "Advanced Analysis"]
         )
 
         # Initialize session state for data storage
@@ -55,6 +56,11 @@ def main():
         elif page == "Analysis":
             if st.session_state.data is not None:
                 show_analysis_section(st.session_state.data)
+            else:
+                st.warning("Please upload data first!")
+        elif page == "Advanced Analysis":
+            if st.session_state.data is not None:
+                show_advanced_analysis_section(st.session_state.data)
             else:
                 st.warning("Please upload data first!")
 
