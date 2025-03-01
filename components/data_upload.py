@@ -9,6 +9,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def show_upload_section():
+    """
+    Display and handle the data upload section of the Streamlit app.
+    """
     st.header("Data Upload")
     st.write("Upload your data file (CSV or Excel)")
 
