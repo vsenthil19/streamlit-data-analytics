@@ -1,0 +1,13 @@
+Set up a virtual environment:
+
+python -m venv venv
+venv\Scripts\activate
+
+
+Install required packages:
+
+pip install numpy pandas plotly scipy sqlalchemy psycopg2-binary python-dotenv openpyxl streamlit
+
+Run the application:
+
+streamlit run main.py

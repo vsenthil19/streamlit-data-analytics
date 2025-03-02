@@ -6,6 +6,8 @@ from components.data_explorer import show_explorer_section
 from components.visualizations import show_visualization_section
 from components.analysis import show_analysis_section
 from components.advanced_analysis import show_advanced_analysis_section
+from dotenv import load_dotenv
+import os
 
 # Configure logging
 logging.basicConfig(
@@ -13,6 +15,17 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Load environment variables at startup
+try:
+    load_dotenv()
+    logger.info("Environment variables loaded successfully")
+    if os.getenv("DATABASE_URL"):
+        logger.info("DATABASE_URL found in environment")
+    else:
+        logger.error("DATABASE_URL not found in environment")
+except Exception as e:
+    logger.error(f"Error loading environment variables: {str(e)}")
 
 try:
     st.set_page_config(

@@ -76,7 +76,7 @@ def show_upload_section():
                                 st.session_state.current_dataset_id = dataset.id
                                 st.session_state.data = data
                                 st.success(f"Loaded dataset: {dataset.name}")
-                                st.experimental_rerun()
+                                st.rerun()
                             except Exception as e:
                                 st.error(f"Error loading dataset: {str(e)}")
                                 logger.error(f"Error loading dataset {dataset.name}: {str(e)}")

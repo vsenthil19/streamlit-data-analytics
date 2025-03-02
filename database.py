@@ -3,31 +3,47 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
 import os
+from dotenv import load_dotenv
 import pandas as pd
 from datetime import datetime
 import logging
 import time
 from io import StringIO
+import sys
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Try to load environment variables from .env file, but don't fail if it doesn't exist
+logger.info("Current working directory: %s", os.getcwd())
+try:
+    load_dotenv()
+    logger.info("Loaded environment variables from .env file")
+except Exception as e:
+    logger.info("No .env file found, using system environment variables")
+
 # Get database URL from environment
+logger.info("Attempting to load DATABASE_URL from environment...")
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
+    logger.error("DATABASE_URL environment variable is not set")
+    logger.info("Available environment variables: %s", list(os.environ.keys()))
     raise ValueError("DATABASE_URL environment variable is not set")
+else:
+    # Log a sanitized version of the URL (hide password)
+    sanitized_url = DATABASE_URL.replace('//', '//***:***@')
+    logger.info("Database URL found: %s", sanitized_url)
 
 def create_db_engine(retries=3, delay=2):
     """Create database engine with retry logic"""
     for attempt in range(retries):
         try:
-            # Disable connection pooling and set SSL mode to require
+            logger.info(f"Attempt {attempt + 1} to create database engine")
             engine = create_engine(
                 DATABASE_URL,
                 poolclass=NullPool,
                 connect_args={
-                    "sslmode": "require",
                     "connect_timeout": 30
                 }
             )
